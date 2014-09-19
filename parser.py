@@ -1,7 +1,7 @@
 import codecs
 import requests
 from collections import defaultdict
-
+import json as js
 
 def get_color(color_string):
     return unicode([u'black', u'yellow', u'saddlebrown', u'darkviolet', u'grey', u'red', u'green', u'blue'].index(color_string))
@@ -15,6 +15,8 @@ def get_sex(sex_string):
 def get_time_representation(time_string):
     return unicode([u'much', u'little', u'nothing'].index(time_string))
 
+def get_index_of_stage(time_string):
+    return [u'introduction', u'questions_begining', u'present_past_future', u'seasons_of_year', u'days_of_week', u'parts_of_day', u'timeline', u'questions_ending'].index(time_string)
 
 def get_yes_no(yn_string):
     return unicode([u'yes', u'no'].index(yn_string))
@@ -254,11 +256,14 @@ def print_questions_ending(question_stage, csv, experimento_result):
 
 
 def main():
-    link = "http://circles-experiment.meteor.com/results_json"
-    f = requests.get(link)
+    # link = "http://circles-experiment.meteor.com/results_json"
+    # link = "file:///home/chudi/trabajo/neuro/neuro-circles-json-to-csv/2014-09-108-results_json.json"
+
+
+    # f = requests.get(link)
 
     bad_experiments = [u'e7bef789-7572-4d6d-9b08-3c08143e7cde',
-                       u'e2d1a338-159d-4db3-b7f5-0804ddca0a1c',
+                       u'e2d1a338-1059d-4db3-b7f5-0804ddca0a1c',
                        u'98a6eba7-4090-44c1-b879-8c6e1f0be2e4',
                        u'5fcccc6a-85c8-4a7e-a0ca-9db05ee78856',
                        u'e7bef789-7572-4d6d-9b08-3c08143e7cde',
@@ -271,18 +276,22 @@ def main():
                        u'6000d89f-cd88-435b-88ac-cf5f85943e1e',
                        u'093a4d6c-4c12-4aa2-b911-5f2492a14e64',
                        u'e17362ed-c452-4890-b7de-04c4c4585ae6',
-                       u'beae299f-173f-46d4-9ab6-72a281b9302c']
+                       u'beae299f-1073f-46d4-9ab6-72a281b9302c']
+    # json = f.json()
+    # json_data = open('2014-09-108-results_json.json')
+    json = js.loads(open('2017-09-19-results_json').read().decode('utf-8'))
 
-    json = f.json()
+
+    bad_experiments_file = open('incompletos.json', 'w')
+
+    # json = js.load(json_data)
     with codecs.open('circles.csv', 'w', encoding='utf-8') as csv:
         users_stages = {}
         users_stages = defaultdict(list)
 
         for x in json:
-            try:
+            if x[u'start_time'] > 1410922800000:
                 users_stages[x[u'experiment']].append(x)
-            except:
-                pass
 
         print_questions_header(csv)
 
@@ -300,29 +309,109 @@ def main():
 
         csv.write('\n')
 
+        print "#experimentos: " + str(len(users_stages))
+        experimentos_incompleto = 0
+        experimentos_completo = 0
+        experimentos_con_pozos = 0
         for experimento in users_stages:
             if experimento in bad_experiments:
                 continue
             experimento_result = {}
+            experimento_completo = True
+            # print "#cant de stages x experimento: " + str(len(users_stages[experimento]))
+            # print "experimento: " + str(experimento)
             for q_stage in users_stages[experimento]:
-                print_questions(q_stage, csv, experimento_result)
-                print_present_past_future(q_stage, csv, experimento_result)
-                print_seasons_of_year(q_stage, csv, experimento_result)
-                print_parts_of_day(q_stage, csv, experimento_result)
-                print_days_of_week(q_stage, csv, experimento_result)
-                print_timeline(q_stage, csv, experimento_result)
-                print_questions_ending(q_stage, csv, experimento_result)
+                try:
+                    print_questions(q_stage, csv, experimento_result)
+                    print_present_past_future(q_stage, csv, experimento_result)
+                    print_seasons_of_year(q_stage, csv, experimento_result)
+                    print_parts_of_day(q_stage, csv, experimento_result)
+                    print_days_of_week(q_stage, csv, experimento_result)
+                    print_timeline(q_stage, csv, experimento_result)
+                    print_questions_ending(q_stage, csv, experimento_result)
+                except Exception:
+                    pass
 
-            if experimento_result and len(experimento_result) == 7:
-                csv.write(experimento_result[u'questions_begining'])
-                csv.write(experimento_result[u'present_past_future'])
-                csv.write(experimento_result[u'seasons_of_year'])
-                csv.write(experimento_result[u'parts_of_day'])
-                csv.write(experimento_result[u'days_of_week'])
-                csv.write(experimento_result[u'timeline'])
-                csv.write(experimento_result[u'questions_ending'])
+            if experimento_result:
+                try:
+                    csv.write(experimento_result[u'questions_begining'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+
+                try:
+                    csv.write(experimento_result[u'present_past_future'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                try:
+                    csv.write(experimento_result[u'seasons_of_year'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                try:
+                    csv.write(experimento_result[u'parts_of_day'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t')
+
+                try:
+                    csv.write(experimento_result[u'days_of_week'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t')
+
+                try:
+                    csv.write(experimento_result[u'timeline'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10\t-10\t-10\t')
+
+                try:
+                    csv.write(experimento_result[u'questions_ending'])
+                except Exception:
+                    experimento_completo = False
+                    csv.write('-10\t-10\t-10\t-10\t')
+                    csv.write('-10')
 
                 csv.write('\n')
+
+            if not experimento_completo:
+                experimentos_incompleto += 1
+                bad_experiments_file.write(experimento + '\n')
+                lista = []
+                for stage in users_stages[experimento]:
+                    bad_experiments_file.write(js.dumps(stage[u'stage']) + '\n')
+                    lista.append(get_index_of_stage(stage[u'stage']))
+
+                lista.sort()
+                for i in range(len(lista) - 1):
+                    if lista[i + 1] - lista[i] > 1:
+                        print "hay un hueco"
+
+            else:
+                experimentos_completo += 1
+
+        print "#experimentos incompletos: " + str(experimentos_incompleto)
+        print "#experimentos completos: " + str(experimentos_completo)
 
 if __name__ == "__main__":
     main()
